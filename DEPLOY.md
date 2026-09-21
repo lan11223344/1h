@@ -44,22 +44,29 @@ ipconfig | Select-String "IPv4"
 
 ## 三、做法 B：公网部署（推荐）
 
-项目已经预置好三个平台的配置文件，**开箱即可部署**：
+项目已经预置好四个平台的配置文件，**开箱即可部署**：
 
 - `vercel.json` —— Vercel（已配 SPA 回退 + 静态资源长缓存）
 - `netlify.toml` —— Netlify（同上）
+- `edgeone.json` —— 腾讯 EdgeOne Pages（国内节点，**国内访客首选**）
 - `.github/workflows/deploy.yml` —— GitHub Pages（含自动类型检查 + 子路径处理）
 
 ### 方案对比
 
 | 平台 | 免费额度 | 自定义域名 | 国内访问速度 | 上手难度 |
 | --- | --- | --- | --- | --- |
-| **Vercel** | 个人项目免费 | 支持，免 HTTPS | 一般，偶有波动 | ⭐ 最简单 |
+| **EdgeOne Pages**（腾讯） | 免费 | 支持 | ⭐ **最快**，国内 CDN 节点 | ⭐ 简单 |
+| **Vercel** | 个人项目免费 | 支持，免 HTTPS | ❌ `*.vercel.app` 在大陆被 DNS 污染，直连打不开 | ⭐ 最简单 |
 | **Netlify** | 100GB/月带宽 | 支持，免 HTTPS | 一般 | ⭐ 简单 |
 | **Cloudflare Pages** | 无限请求 | 支持 | 相对较好 | ⭐⭐ 稍复杂 |
 | **GitHub Pages** | 免费 | 支持 | 一般 | ⭐⭐ 需配 Actions |
 
-**如果你主要给国内的人看**，还有一个选择：腾讯云 EdgeOne Pages / 阿里云 OSS + CDN。国内节点访问快很多，但**自定义域名需要备案**（约 2–3 周）。不备案的话用平台自带的默认域名也能访问，只是不够好看。
+> ⚠️ **重要实测结论**：`*.vercel.app` 默认域名在中国大陆**无法直连**（DNS 污染/屏蔽），
+> 表现为 Vercel 控制台能打开、但你的网站域名打不开。已部署到 Vercel 也不会白费——
+> 换绑自定义域名即可正常访问，或直接改用 EdgeOne Pages。
+
+**主要给国内访客看就用 EdgeOne Pages**：默认域名 `*.edgeone.app` 国内可直连、**不需要备案**，
+注册支持微信扫码。只有绑自定义域名时才涉及备案。
 
 ### 步骤 1：把代码推到 GitHub
 
@@ -74,23 +81,46 @@ git push -u origin main
 
 > `package.json` 里已经配了 `build` 脚本，`.gitignore` 会排除 `node_modules` 和 `dist`，不用手动清理。
 
-### 步骤 2A：部署到 Vercel（最省事）
+### 步骤 2A：部署到 EdgeOne Pages（国内访客首选）
+
+**方式一：导入 Git 仓库（推荐，推送即自动部署）**
+
+1. 打开 [console.cloud.tencent.com/edgeone/pages](https://console.cloud.tencent.com/edgeone/pages)，微信扫码注册/登录
+2. 点 **创建项目 → 导入 Git 仓库**，授权并选中你的仓库
+3. 构建配置保持默认（`edgeone.json` 已声明好，通常自动识别）：
+   - 构建命令：`npm run build`
+   - 输出目录：`./dist`
+   - Node 版本：`22.11.0`
+4. 点 **开始部署**，约 1–2 分钟完成
+5. 拿到 `https://<项目名>-<随机串>.edgeone.app` 形式的地址
+
+**方式二：直接上传（不碰 Git，最快）**
+
+1. 本地先构建：`npm run build`
+2. 控制台点 **创建项目 → 直接上传**，把 **`dist` 文件夹**拖进去
+3. 点开始部署，30 秒拿到访问链接
+
+> 注意：**加速区域选「全球可用区（含中国大陆）」**，这样国内节点才会生效。
+> 直接上传方式的默认域名链接可能有时效限制，长期用建议走 Git 导入或绑自定义域名。
+
+### 步骤 2B：部署到 Vercel
 
 1. 打开 [vercel.com](https://vercel.com)，用 GitHub 账号登录
 2. 点 **Add New → Project**，选中刚推的仓库
 3. 配置会被自动识别（Vite 框架），**直接点 Deploy**
-4. 约 1 分钟后拿到 `https://<项目名>.vercel.app` —— 这个链接就可以发给任何人了
+4. 约 1 分钟后拿到 `https://<项目名>.vercel.app`
 
-以后每次 `git push`，Vercel 会自动重新构建并上线。不同分支还会生成独立的预览链接。
+> ⚠️ **但 `*.vercel.app` 在大陆打不开**（DNS 污染）。Vercel 适合有代理的场景，
+> 或部署后立刻绑定自定义域名。国内访客为主请优先用 EdgeOne Pages。
 
-### 步骤 2B：部署到 Netlify
+### 步骤 2C：部署到 Netlify
 
 1. 打开 [netlify.com](https://netlify.com)，GitHub 登录
 2. **Add new site → Import an existing project**，选仓库
 3. 构建命令 `npm run build`、发布目录 `dist`（`netlify.toml` 里已写好，通常自动填充）
 4. 点 Deploy
 
-### 步骤 2C：部署到 GitHub Pages
+### 步骤 2D：部署到 GitHub Pages
 
 1. 仓库 **Settings → Pages → Source** 选 **GitHub Actions**
 2. 推送到 `main` 分支后，Actions 自动跑构建并部署
@@ -101,10 +131,14 @@ git push -u origin main
 
 ### 步骤 3：绑自定义域名（可选但建议）
 
-1. 买域名：Namecheap / Cloudflare Registrar / 腾讯云（`.com` 约 ¥60–80/年，`.dev` 稍贵）
+1. 买域名：腾讯云 / Namecheap / Cloudflare Registrar（`.com` 约 ¥60–80/年）
 2. 在部署平台的 Domains 设置里添加该域名
-3. 按提示到域名商后台加 DNS 记录（通常是一条 `A` 记录或 `CNAME`）
+3. 按提示到域名商后台加 DNS 记录（通常是一条 `CNAME`，EdgeOne 会给出目标值）
 4. 等 5 分钟到几小时生效，平台会自动签发 HTTPS 证书
+
+> **备案说明**：EdgeOne Pages 用默认的 `*.edgeone.app` 域名**不需要备案**；
+> 一旦绑定自定义域名指向国内节点，按工信部要求需要完成 ICP 备案（约 2–3 周）。
+> 如果不想备案又想要自己的域名，可考虑用海外节点 + 自定义域名（速度会有折中）。
 
 **域名要放在国内服务器上才需要备案**；放在 Vercel / Netlify / Cloudflare 的海外节点则不需要，代价是国内访问速度一般。
 
@@ -161,6 +195,25 @@ npm run preview    # 本地预览构建产物，验证和线上一致
 ```
 
 > 习惯建议：**推送前先跑 `npm run build`**。它包含 `tsc -b`，能提前挡住类型错误，避免线上构建失败。
+
+### 推送命令（本机 git 不在系统 PATH）
+
+这台电脑的 git 装在 WorkBuddy 自带的 PortableGit 里，直接用 `git` 会报「不是内部或外部命令」。
+两种解法：
+
+**解法一：用完整路径（临时可用）**
+
+```powershell
+cd "C:\Users\兰浩\WorkBuddy\2026-09-21-20-45-14"
+& "C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd\git.exe" add .
+& "C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd\git.exe" commit -m "update content"
+& "C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd\git.exe" push
+```
+
+**解法二：加进系统 PATH（一劳永逸，推荐）**
+
+把 `C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd` 加入用户环境变量 Path，
+重开终端后就能直接敲 `git` 了。
 
 ### 更新依赖
 
