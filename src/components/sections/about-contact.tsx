@@ -103,13 +103,8 @@ export function Contact() {
                   <a
                     key={item.label}
                     href={item.href}
-                    target={item.href.startsWith("http") ? "_blank" : undefined}
-                    rel={
-                      item.href.startsWith("http")
-                        ? "noreferrer noopener"
-                        : undefined
-                    }
-                    className="inline-flex items-center gap-1 underline-offset-4 transition-colors hover:text-foreground hover:underline"
+                    // 同 hero：不用 target="_blank"，规避国产浏览器新窗口兼容问题
+                    className="inline-flex items-center gap-1 py-2 -my-2 underline-offset-4 transition-colors hover:text-foreground hover:underline"
                   >
                     {item.label}
                     <ArrowUpRight className="size-3.5" />

@@ -40,3 +40,16 @@ Thumbs.db
 
 # 本工作区内部数据
 .workbuddy/
+
+# 本地临时调试文件（勿提交）
+ffmpeg-dist/
+ffmpeg.zip
+.*.cjs
+.*.png
+.*.mp4
+.codec-info.txt
+.git-probe*.txt
+.verify-out.json
+.tap-*
+.frame-*
+.probe.mp4

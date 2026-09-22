@@ -102,22 +102,47 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
     },
     ref
   ) => {
+    /*
+      触屏交互用 JS 状态驱动，而不是 :active / :focus-visible 伪类——
+      国产安卓浏览器上快速点按的 active 一闪而过、focus-visible 不触发，
+      只有显式的点击状态在所有手机上行为一致。
+      点按卡片堆 → 扇形展开（灰度恢复、间距拉大）；再点一次收起。
+    */
+    const [expanded, setExpanded] = React.useState(false);
+    const toggleExpanded = () => setExpanded((v) => !v);
+
     if (cards.length === 0) return null;
 
     const total = cards.length;
+
+    // 展开时的层叠系数：给触屏一个明显大于 hover 的扇形
+    const effectiveSpread = expanded ? spread * 2.1 : spread;
 
     return (
       <div
         ref={ref}
         data-slot="display-cards"
+        data-expanded={expanded || undefined}
+        role="button"
+        tabIndex={0}
+        aria-pressed={expanded}
+        aria-label={expanded ? "收起卡片堆" : "展开卡片堆"}
+        onClick={toggleExpanded}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggleExpanded();
+          }
+        }}
         className={cn(
           // 响应式容器：移动端收紧内边距，避免卡片贴边；宽屏给出呼吸感
-          "group/stack grid w-full max-w-3xl px-1 py-4 sm:px-4 sm:py-8",
+          "group/stack grid w-full max-w-3xl cursor-pointer px-1 py-4 sm:px-4 sm:py-8",
           "grid-cols-1 [grid-template-areas:'stack']",
           // 层叠偏移单位：移动端更紧凑，避免后排卡片被推出视口
           "[--stack-x:1rem] [--stack-y:0.8rem] sm:[--stack-x:2.2rem] sm:[--stack-y:1.8rem] lg:[--stack-x:3rem] lg:[--stack-y:2.5rem]",
           // 预留展开所需的垂直空间：卡片高度 + 最大 Y 向偏移
           "min-h-[15.5rem] items-start justify-items-start sm:min-h-[19rem] lg:min-h-[22rem]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl",
           className
         )}
         {...props}
@@ -131,10 +156,9 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
           return (
             <article
               key={`${card.title ?? "card"}-${index}`}
-              tabIndex={isFront ? 0 : -1}
               aria-label={card.title}
               style={{
-                ...cardStackStyle(index, spread, offsetY),
+                ...cardStackStyle(index, effectiveSpread, offsetY),
                 ...(accent ? ({ "--accent-color": accent } as React.CSSProperties) : {}),
               }}
               className={cn(
@@ -144,14 +168,13 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
                 "overflow-hidden rounded-xl border bg-card p-5 text-card-foreground",
                 "shadow-[0_-1px_0_0_hsl(var(--border))_inset,0_0_0_1px_hsl(var(--border)),0_8px_30px_-12px_rgb(0_0_0_/_0.35)]",
                 "outline-none ring-offset-background sm:h-[13.5rem] sm:w-[min(100%,22rem)]",
-                "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 // 抬起：改 --lift 而不是 translate 工具类，避免覆盖 inline transform
-                // hover 覆盖鼠标，active 覆盖触屏（按住即抬起），focus-visible 覆盖键盘
-                "transition-[filter,box-shadow] hover:[--lift:-0.75rem] focus-visible:[--lift:-0.75rem] active:[--lift:-0.75rem]",
-                // 容器内任一卡片获得焦点（点击 / Tab）时小幅抬起全部
-                "group-focus-within/stack:[--lift:-0.25rem]",
-                // 灰度层叠效果
-                isBack && "grayscale group-hover/stack:grayscale-0 group-focus-within/stack:grayscale-0",
+                // hover 覆盖鼠标（桌面），展开状态下由 JS 状态接管视觉
+                "transition-[filter,box-shadow] hover:[--lift:-0.75rem]",
+                // 灰度层叠效果：收起时灰度，展开后恢复彩色
+                isBack &&
+                  !expanded &&
+                  "grayscale group-hover/stack:grayscale-0",
                 card.className
               )}
             >

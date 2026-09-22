@@ -23,12 +23,7 @@ export function Work() {
               <Reveal key={project.title} delay={index * 70} className="h-full">
                 <a
                   href={project.href}
-                  target={project.href.startsWith("http") ? "_blank" : undefined}
-                  rel={
-                    project.href.startsWith("http")
-                      ? "noreferrer noopener"
-                      : undefined
-                  }
+                  // 不用 target="_blank"：规避国产浏览器新窗口打不开的问题
                   className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card p-5 text-card-foreground transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_48px_-24px_rgb(0_0_0_/_0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-6"
                 >
                   {/* 悬停时浮现的强调色光晕 */}

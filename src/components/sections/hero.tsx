@@ -67,14 +67,18 @@ export function Hero() {
               </Button>
             </div>
 
-            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground sm:mt-8">
+            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground sm:mt-8">
               {socials.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  target={item.href.startsWith("http") ? "_blank" : undefined}
-                  rel={item.href.startsWith("http") ? "noreferrer noopener" : undefined}
-                  className="underline-offset-4 transition-colors hover:text-foreground hover:underline"
+                  /*
+                    不用 target="_blank"：vivo / QQ / UC 等国产浏览器内核
+                    对新窗口打开支持不完整，点按可能完全无响应。
+                    当前页跳转在所有浏览器上都可靠，且手机上有返回键。
+                    py-2/-my-2 把触控热区扩到 44px 而不改变视觉布局。
+                  */
+                  className="inline-flex items-center py-2 -my-2 underline-offset-4 transition-colors hover:text-foreground hover:underline"
                 >
                   {item.label}
                 </a>
@@ -107,14 +111,13 @@ export function Hero() {
                 className="mx-auto lg:mx-0"
               />
               {/*
-                交互提示按设备区分：桌面讲悬停 / Tab，
-                触屏讲「按住」—— 因为真正的抬起是 active 状态，不是点击
+                交互提示按设备区分：桌面悬停展开，触屏点按展开/收起
               */}
               <p className="mt-2 pl-1 text-xs leading-relaxed text-muted-foreground">
                 <span className="hidden sm:inline">
                   悬停或用 Tab 聚焦，卡片会依次展开
                 </span>
-                <span className="sm:hidden">按住卡片即可展开查看</span>
+                <span className="sm:hidden">点按卡片展开，再点一次收起</span>
               </p>
             </div>
           </div>
