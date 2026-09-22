@@ -5,8 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="个人作品集网站 —— 以 Display Cards 堆叠卡片为核心的现代个人主页。"
+      content="兰浩的个人作品集 —— 杭州电子科技大学大一在读，前端 / 全栈方向。独立完成设计、编码与部署的个人站点，基于 React、TypeScript 与 Tailwind CSS。"
     />
+    <meta name="author" content="兰浩" />
+    <meta
+      name="keywords"
+      content="兰浩,个人作品集,前端,React,TypeScript,Tailwind CSS,杭州电子科技大学,实习"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://lanhao.site/" />
+
+    <!-- 分享卡片：微信、QQ、飞书、Twitter 等抓取这些信息生成预览 -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="兰浩 · 个人作品集" />
+    <meta property="og:url" content="https://lanhao.site/" />
+    <meta property="og:title" content="兰浩 · 前端 / 全栈方向 · 杭电大一在读" />
+    <meta
+      property="og:description"
+      content="独立完成设计、编码与部署的个人站点。React + TypeScript + Tailwind，手写的卡片堆叠交互。"
+    />
+    <meta property="og:image" content="https://lanhao.site/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="兰浩个人作品集分享卡片" />
+    <meta property="og:locale" content="zh_CN" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="兰浩 · 前端 / 全栈方向 · 杭电大一在读" />
+    <meta
+      name="twitter:description"
+      content="独立完成设计、编码与部署的个人站点。React + TypeScript + Tailwind，手写的卡片堆叠交互。"
+    />
+    <meta name="twitter:image" content="https://lanhao.site/og-image.png" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <title>兰浩 · 个人作品集</title>
     <script>
       (function () {
@@ -19,6 +54,26 @@
           if (dark) document.documentElement.classList.add("dark");
         } catch (e) {}
       })();
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "兰浩",
+        "url": "https://lanhao.site/",
+        "jobTitle": "前端 / 全栈方向",
+        "affiliation": {
+          "@type": "CollegeOrUniversity",
+          "name": "杭州电子科技大学"
+        },
+        "knowsAbout": [
+          "HTML/CSS",
+          "JavaScript",
+          "React",
+          "TypeScript",
+          "Tailwind CSS"
+        ]
+      }
     </script>
   </head>
   <body>

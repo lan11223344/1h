@@ -7,17 +7,18 @@ import { cn } from "@/lib/utils";
  * DisplayCards
  * ------------------------------------------------------------------
  * 堆叠式卡片组：三张卡片通过 CSS Grid 叠放在同一格（grid-area: stack），
- * 默认逐层向右下偏移形成"牌堆"层叠感；hover 时前排卡片抬起、后层卡片
- * 由灰度恢复彩色并移除遮罩，形成"扇形展开 + 点亮"的交互。
+ * 默认逐层向右下偏移形成"牌堆"层叠感；展开时当前卡片抬起、后层卡片
+ * 由灰度恢复彩色，形成"扇形展开 + 点亮"的效果。
  *
  * 作者风格参考：user_Codehagen / Prism UI
  * 安装锚点：npx shadcn@latest add https://21st.dev/r/user_Codehagen/display-cards
  *
  * 设计要点：
  * - 容器为响应式 Grid，所有卡片共用同一 grid-area，因此天然重叠。
- * - 通过 --stack-index 自定义属性驱动偏移量，便于按数量自适应。
- * - 触屏设备没有 hover：用 `group-focus-within` + `active` 兜底，
- *   保证键盘 Tab 与点击同样能展开卡片，避免"内容只存在于 hover 里"。
+ * - 偏移量全部走 CSS 变量（--stack-x / --stack-y / --lift），
+ *   断点差异在类名里声明，组件本身不写死任何尺寸。
+ * - 触屏设备没有 hover：用 active（按住即抬起）+ group-focus-within 兜底，
+ *   保证点击 / Tab 也能展开卡片，不会出现"内容只存在于 hover 里"。
  */
 
 export type DisplayCardItem = {
@@ -45,7 +46,7 @@ export interface DisplayCardsProps
   extends React.HTMLAttributes<HTMLDivElement> {
   /** 卡片数据数组，按顺序渲染（后者覆盖在前者之上） */
   cards?: DisplayCardItem[];
-  /** 整个卡片组在 hover / focus 时的层叠偏移缩放系数 */
+  /** 整个卡片组在展开时的层叠偏移缩放系数 */
   spread?: number;
   /** 卡片堆整体在 Y 轴的额外偏移（px），用于不同版心对齐 */
   offsetY?: number;
@@ -61,20 +62,26 @@ const DEFAULT_ACCENTS = [
   "hsl(189 94% 43%)", // cyan-600
 ];
 
-/** 为每张卡片生成基于索引的层叠偏移与遮罩样式 */
+/**
+ * 层叠偏移量：完全由 CSS 变量承载，随视口宽度自适应。
+ * 移动端卡片本就接近满宽，若沿用桌面端的 3rem 偏移，后排卡片会被推出屏幕外，
+ * 所以小屏用更小的单位（1rem / 0.8rem），断点切换写在容器的类名上。
+ */
+const STACK_UNIT_X = "var(--stack-x)";
+const STACK_UNIT_Y = "var(--stack-y)";
+
+/** 为每张卡片生成基于索引的层叠偏移样式 */
 function cardStackStyle(
   index: number,
   spread: number,
   offsetY: number
 ): React.CSSProperties {
-  // 索引从 0 开始，0 为最底层（排在最前，视觉上被后续卡片盖住）
+  // 索引从 0 开始，0 为最底层（视觉上被后续卡片盖住）
   const depth = index;
   return {
     gridArea: "stack",
-    // 层叠基准位移：越靠后的卡片越向右下偏移
-    transform: `translate3d(calc(${depth} * 3rem * ${spread}), calc(${
-      depth * 2.5 * spread
-    }rem + ${offsetY}px), 0)`,
+    // 用 CSS 变量承载偏移，展开时覆写 --lift 实现"抬起"
+    transform: `translate3d(calc(${depth} * ${STACK_UNIT_X} * ${spread}), calc(${depth} * ${STACK_UNIT_Y} * ${spread} + ${offsetY}px + var(--lift, 0px)), 0)`,
     zIndex: depth + 1,
     transitionProperty: "transform, opacity, filter",
     transitionDuration: "500ms",
@@ -104,11 +111,13 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
         ref={ref}
         data-slot="display-cards"
         className={cn(
-          // 响应式容器：小屏收紧内边距，大屏给出足够呼吸感
-          "group/stack grid w-full max-w-3xl px-2 py-6 sm:px-6 sm:py-10",
+          // 响应式容器：移动端收紧内边距，避免卡片贴边；宽屏给出呼吸感
+          "group/stack grid w-full max-w-3xl px-1 py-4 sm:px-4 sm:py-8",
           "grid-cols-1 [grid-template-areas:'stack']",
-          // 为扇形展开预留垂直空间
-          "[--card-spread:1] min-h-[20rem] items-start justify-items-start sm:min-h-[24rem]",
+          // 层叠偏移单位：移动端更紧凑，避免后排卡片被推出视口
+          "[--stack-x:1rem] [--stack-y:0.8rem] sm:[--stack-x:2.2rem] sm:[--stack-y:1.8rem] lg:[--stack-x:3rem] lg:[--stack-y:2.5rem]",
+          // 预留展开所需的垂直空间：卡片高度 + 最大 Y 向偏移
+          "min-h-[15.5rem] items-start justify-items-start sm:min-h-[19rem] lg:min-h-[22rem]",
           className
         )}
         {...props}
@@ -130,15 +139,19 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
               }}
               className={cn(
                 // 基础卡片外观（shadcn/ui tokens）
-                "relative flex h-[13rem] w-[19rem] flex-col justify-between",
+                // 宽度用 min() 而非固定值：窄屏时自动收缩，永不超过容器
+                "relative flex h-[11.5rem] w-[min(100%,18rem)] flex-col justify-between",
                 "overflow-hidden rounded-xl border bg-card p-5 text-card-foreground",
                 "shadow-[0_-1px_0_0_hsl(var(--border))_inset,0_0_0_1px_hsl(var(--border)),0_8px_30px_-12px_rgb(0_0_0_/_0.35)]",
-                "outline-none ring-offset-background sm:h-[14rem] sm:w-[22rem]",
+                "outline-none ring-offset-background sm:h-[13.5rem] sm:w-[min(100%,22rem)]",
                 "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                // 抬升与聚焦
-                "hover:-translate-y-2 focus-visible:-translate-y-2",
+                // 抬起：改 --lift 而不是 translate 工具类，避免覆盖 inline transform
+                // hover 覆盖鼠标，active 覆盖触屏（按住即抬起），focus-visible 覆盖键盘
+                "transition-[filter,box-shadow] hover:[--lift:-0.75rem] focus-visible:[--lift:-0.75rem] active:[--lift:-0.75rem]",
+                // 容器内任一卡片获得焦点（点击 / Tab）时小幅抬起全部
+                "group-focus-within/stack:[--lift:-0.25rem]",
                 // 灰度层叠效果
-                isBack && "grayscale hover:grayscale-0",
+                isBack && "grayscale group-hover/stack:grayscale-0 group-focus-within/stack:grayscale-0",
                 card.className
               )}
             >
@@ -181,7 +194,8 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
                 {card.description ? (
                   <p
                     className={cn(
-                      "text-sm leading-relaxed text-muted-foreground",
+                      // 说明文案在小屏上字号略降，避免三行以上把卡片撑爆
+                      "text-[13px] leading-relaxed text-muted-foreground sm:text-sm",
                       card.descriptionClassName
                     )}
                   >
@@ -200,14 +214,22 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
                 }}
               />
 
-              {/* 前层卡片的柔光，增强堆叠层次 */}
-              {isFront ? (
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-16 -top-16 size-40 rounded-full opacity-[0.12] blur-2xl"
-                  style={{ background: "var(--accent-color)" }}
-                />
-              ) : null}
+              {/* 装饰层：统一收进裁切容器。
+                  光晕原本用负偏移顶出卡片外，虽然 overflow-hidden 能把它裁掉、
+                  不产生滚动条，但会让卡片 scrollWidth 大于 clientWidth，
+                  在移动端容易触发误判的横向滚动。改为由父级精确裁切。 */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+              >
+                {/* 前层卡片的柔光，增强堆叠层次 */}
+                {isFront ? (
+                  <span
+                    className="absolute -right-16 -top-16 size-40 rounded-full opacity-[0.12] blur-2xl"
+                    style={{ background: "var(--accent-color)" }}
+                  />
+                ) : null}
+              </span>
             </article>
           );
         })}

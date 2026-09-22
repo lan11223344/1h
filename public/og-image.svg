@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0a0a0b" />
+      <stop offset="1" stop-color="#16161a" />
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientTransform="translate(980 120) scale(420)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity="0.55" />
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientTransform="translate(180 560) scale(380)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.4" />
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#ffffff" fill-opacity="0.06" />
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#dots)" />
+  <rect width="1200" height="630" fill="url(#glowA)" />
+  <rect width="1200" height="630" fill="url(#glowB)" />
+
+  <!-- 左侧主信息 -->
+  <g>
+    <rect x="88" y="150" width="60" height="60" rx="14" fill="#fafafa" />
+    <text x="118" y="191" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="26" font-weight="700" fill="#0a0a0b" text-anchor="middle">LH</text>
+
+    <text x="88" y="290" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="76" font-weight="700" fill="#fafafa" letter-spacing="-2">兰浩</text>
+
+    <text x="88" y="352" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="30" font-weight="500" fill="#a1a1aa">前端 / 全栈方向 · 杭电大一在读</text>
+
+    <rect x="88" y="400" width="1" height="0" fill="none" />
+    <text x="88" y="418" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="24" font-weight="400" fill="#71717a">独立完成设计、编码与部署的个人站点</text>
+    <text x="88" y="456" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="24" font-weight="400" fill="#71717a">React · TypeScript · Tailwind CSS</text>
+
+    <rect x="88" y="512" width="180" height="44" rx="22" fill="#18181b" stroke="#3f3f46" stroke-width="1.5" />
+    <text x="178" y="541" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="20" font-weight="500" fill="#d4d4d8" text-anchor="middle">lanhao.site</text>
+  </g>
+
+  <!-- 右侧卡片堆：呼应页面核心交互 -->
+  <g transform="translate(700, 190)">
+    <g transform="translate(96, 72)">
+      <rect width="300" height="200" rx="18" fill="#141418" stroke="#2a2a31" stroke-width="1.5" />
+    </g>
+    <g transform="translate(48, 36)">
+      <rect width="300" height="200" rx="18" fill="#17171c" stroke="#31313a" stroke-width="1.5" />
+    </g>
+    <g>
+      <rect width="300" height="200" rx="18" fill="#1c1c22" stroke="#3f3f46" stroke-width="1.5" />
+      <rect x="0" y="198" width="300" height="2" rx="1" fill="#3b82f6" fill-opacity="0.75" />
+      <rect x="24" y="26" width="40" height="40" rx="10" fill="#3b82f6" fill-opacity="0.16" stroke="#3b82f6" stroke-opacity="0.35" />
+      <circle cx="44" cy="46" r="7" fill="#60a5fa" />
+      <text x="24" y="108" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="21" font-weight="600" fill="#fafafa">你正在看的</text>
+      <text x="24" y="140" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="17" fill="#a1a1aa">手写卡片堆叠交互</text>
+      <text x="24" y="166" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="17" fill="#a1a1aa">从设计到上线全程独立</text>
+    </g>
+  </g>
+</svg>

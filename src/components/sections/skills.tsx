@@ -12,8 +12,8 @@ export function Skills() {
         <Reveal>
           <SectionHeading
             eyebrow="技能"
-            title="工具与能力边界"
-            description="不追新，但每次选型都会想清楚它为什么值得替换掉现有方案。"
+            title="我现在的技术边界"
+            description="按真实熟练度分层，不堆关键词 —— 「能独立上手」和「正在学」是两回事，混在一起说反而不可信。"
           />
         </Reveal>
 
@@ -21,21 +21,29 @@ export function Skills() {
           {skillGroups.map((group, index) => {
             const Icon = group.icon;
             return (
-              <Reveal key={group.title} delay={index * 70}>
-                <div className="flex h-full flex-col rounded-xl border border-border bg-card p-6 transition-colors hover:border-foreground/20">
+              <Reveal key={group.title} delay={index * 70} className="h-full">
+                <div className="flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/20 sm:p-6">
                   <span className="grid size-10 place-items-center rounded-lg border border-border bg-secondary text-secondary-foreground">
                     <Icon className="size-[18px]" />
                   </span>
                   <h3 className="mt-5 text-sm font-semibold tracking-tight">
                     {group.title}
                   </h3>
+                  {"note" in group && group.note ? (
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground/80">
+                      {group.note}
+                    </p>
+                  ) : null}
                   <ul className="mt-4 space-y-2">
                     {group.items.map((item) => (
                       <li
                         key={item}
                         className="flex items-center gap-2 text-sm text-muted-foreground"
                       >
-                        <span className="size-1 rounded-full bg-foreground/25" />
+                        <span
+                          className="size-1 shrink-0 rounded-full bg-foreground/25"
+                          aria-hidden="true"
+                        />
                         {item}
                       </li>
                     ))}

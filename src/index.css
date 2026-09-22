@@ -75,10 +75,30 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     text-rendering: optimizeLegibility;
+    /* 移动端禁止横向滚动：卡片堆的位移不会溢出视口 */
+    overflow-x: hidden;
   }
 
+  /*
+    锚点跳转时给固定导航留出高度。
+    用 scroll-padding-top 而不是在每个 section 上写 scroll-mt —— 一处生效，全局一致。
+  */
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 4.5rem;
+  }
+
+  /* 触屏上消除点击高亮块，改用我们自己的 :active 反馈 */
+  a,
+  button,
+  [tabindex] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 中文正文在窄屏下的可读性：避免极端字号下断行难看 */
+  p,
+  li {
+    text-wrap: pretty;
   }
 
   @media (prefers-reduced-motion: reduce) {

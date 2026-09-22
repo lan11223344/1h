@@ -1,5 +1,6 @@
 import {
   Aperture,
+  BookOpen,
   Boxes,
   Compass,
   Cpu,
@@ -27,25 +28,27 @@ import * as React from "react";
 export const profile = {
   name: "兰浩",
   initials: "LH",
-  role: "前端工程师 · 界面系统设计",
-  location: "中国 · 深圳",
+  /** 面试时最有说服力的身份是真实身份，不是头衔 */
+  role: "前端 / 全栈方向",
+  /** 一句话说清现在在哪、在做什么 */
+  headline: "杭州电子科技大学 · 大一在读",
+  location: "中国 · 杭州",
   email: "hello@example.com",
-  tagline: "把复杂的产品逻辑，收敛成一眼就懂的界面。",
+  tagline: "先把东西做出来，再谈做得好不好。",
   summary:
-    "七年时间在做同一件事：让界面在真实业务里既好看又好用。擅长 React 生态、设计系统搭建与交互动效，习惯把设计稿拆到像素级，也习惯用性能数据说话。",
+    "杭电大一新生，从高一开始自学 Web 开发。喜欢把想法真的跑起来 —— 这个网站就是我独立完成的第一个公开项目：从设计、写代码，到买域名、配 HTTPS、部署上线，整条链路自己走了一遍。",
+  /** 真实数字：不吹履历，只摆可验证的事实 */
   stats: [
-    { label: "年经验", value: "7+" },
-    { label: "交付项目", value: "60+" },
-    { label: "开源 Star", value: "2.4k" },
-    { label: "设计系统", value: "4" },
+    { label: "在校年级", value: "大一" },
+    { label: "自学时长", value: "3 年" },
+    { label: "公开上线项目", value: "1" },
+    { label: "技术栈", value: "TS" },
   ],
 };
 
 export const socials = [
-  { label: "GitHub", href: "https://github.com" },
-  { label: "X / Twitter", href: "https://x.com" },
-  { label: "Dribbble", href: "https://dribbble.com" },
-  { label: "即刻", href: "https://web.okjike.com" },
+  { label: "GitHub", href: "https://github.com/lan11223344" },
+  { label: "邮箱", href: "mailto:hello@example.com" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -54,61 +57,68 @@ export const socials = [
 
 export const heroCards: DisplayCardItem[] = [
   {
-    icon: <Compass className="size-4" />,
-    title: "正在做的",
-    description: "为一家新能源企业重构数据中台，把 12 个后台收敛成一套设计系统。",
-    date: "进行中",
+    icon: <Sparkles className="size-4" />,
+    title: "你正在看的",
+    description:
+      "lanhao.site —— 独立完成设计、编码与部署的个人站点。React + TypeScript + Tailwind，手写的卡片堆叠交互。",
+    date: "2026",
     iconClassName:
       "border-blue-500/25 bg-blue-500/10 text-blue-600 dark:text-blue-400",
     titleClassName: "text-foreground",
   },
   {
     icon: <Boxes className="size-4" />,
-    title: "开源项目",
-    description: "ui-kit-pro：一套无样式依赖可换肤的组件底座，覆盖 48 个基础组件。",
-    date: "2 周前更新",
+    title: "正在学",
+    description:
+      "把 C 语言和数据结构补扎实，同时在啃 React 生态与前端工程化，目标是把「会写页面」变成「会做系统」。",
+    date: "本学期",
     iconClassName:
       "border-violet-500/25 bg-violet-500/10 text-violet-600 dark:text-violet-400",
   },
   {
-    icon: <Sparkles className="size-4" />,
-    title: "最近专注",
-    description: "交互动效与可访问性——让键盘用户也能走完每一条主流程。",
-    date: "本周",
+    icon: <Compass className="size-4" />,
+    title: "想做的事",
+    description:
+      "加入一个真正做产品的团队，参与从需求到上线的完整流程，而不是只写被切好的静态页面。",
+    date: "进行中",
     iconClassName:
       "border-cyan-500/25 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
   },
 ];
 
 /* ------------------------------------------------------------------ */
-/* 技能                                                                */
+/* 技能 —— 按真实熟练度分层，而不是堆关键词                              */
 /* ------------------------------------------------------------------ */
 
 export const skillGroups = [
   {
     icon: Terminal,
-    title: "工程与框架",
-    items: ["React 18/19", "TypeScript", "Next.js", "Vite", "Node.js", "TanStack"],
+    title: "能独立上手",
+    note: "写过完整项目，遇到问题能自己查明白",
+    items: ["HTML / CSS", "JavaScript", "React", "TypeScript", "Tailwind CSS"],
   },
   {
     icon: PenTool,
-    title: "样式与设计系统",
-    items: ["Tailwind CSS", "shadcn/ui", "Radix UI", "Design Tokens", "Figma", "CVA"],
+    title: "能看懂会用",
+    note: "跟着文档能跑起来，还没到独立造轮子",
+    items: ["Vite", "Git", "shadcn/ui", "Figma", "Vercel / EdgeOne"],
+  },
+  {
+    icon: BookOpen,
+    title: "正在学",
+    note: "课程或自学中，能写但不够熟练",
+    items: ["C 语言", "数据结构", "Node.js", "Vue 3", "Python"],
   },
   {
     icon: Gauge,
-    title: "性能与体验",
-    items: ["Core Web Vitals", "Lazy / Suspense", "虚拟列表", "WCAG 2.2", "Lighthouse", "动效性能"],
-  },
-  {
-    icon: Database,
-    title: "数据与协作",
-    items: ["REST / GraphQL", "Zustand", "React Query", "Git Flow", "CI/CD", "Vitest"],
+    title: "想深入的方向",
+    note: "还没系统学，但明确想往这边走",
+    items: ["前端工程化", "性能优化", "交互动效", "可访问性", "全栈开发"],
   },
 ];
 
 /* ------------------------------------------------------------------ */
-/* 作品集                                                              */
+/* 作品集 —— 只放真实做过的东西                                         */
 /* ------------------------------------------------------------------ */
 
 export type Project = {
@@ -125,103 +135,67 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    title: "Insight 数据中台",
-    subtitle: "企业级数据分析工作台",
+    title: "lanhao.site 个人站点",
+    subtitle: "你正在浏览的这个网站",
     description:
-      "把 12 个分散的后台统一为单一工作台，抽象出可组合的图表与筛选器原语，业务方可自行搭建看板。",
-    tags: ["React", "TypeScript", "ECharts", "设计系统"],
+      "从零开始的第一个公开项目：自己排版设计、用 React + TypeScript 写实现、手写卡片堆叠动效，再走完域名、HTTPS、双平台部署的完整上线流程。",
+    tags: ["React", "TypeScript", "Tailwind", "动效"],
     year: "2026",
     icon: LayoutDashboard,
     accent: "hsl(217 91% 60%)",
-    metric: { value: "-38%", label: "看板搭建耗时" },
+    metric: { value: "100%", label: "独立完成" },
+    href: "https://lanhao.site",
+  },
+  {
+    title: "课程作业合集",
+    subtitle: "大一上学期的编程练习",
+    description:
+      "C 语言的基础练习与小项目：从控制台程序到简单的数据处理，包括把同学的 C++ 程序排查出编码错乱问题的过程。",
+    tags: ["C 语言", "C++", "调试"],
+    year: "2026",
+    icon: Terminal,
+    accent: "hsl(271 81% 56%)",
+    metric: { value: "1 学期", label: "持续练习" },
     href: "#",
   },
   {
-    title: "ui-kit-pro",
-    subtitle: "开源组件底座",
+    title: "组件练习册",
+    subtitle: "复刻常见交互组件",
     description:
-      "零样式依赖的组件层，通过 CSS 变量换肤，48 个基础组件全部通过 a11y 自动化测试，被 3 个团队接入生产。",
-    tags: ["开源", "Radix UI", "Tailwind", "Vitest"],
+      "按 UI 稿复刻导航栏、卡片列表、标签页等常见组件，重点抠键盘可访问性、focus 状态与响应式断点这些容易被跳过的细节。",
+    tags: ["CSS", "响应式", "可访问性"],
     year: "2025",
     icon: Layers,
-    accent: "hsl(271 81% 56%)",
-    metric: { value: "2.4k", label: "GitHub Stars" },
-    href: "#",
-  },
-  {
-    title: "Critique 协作批注",
-    subtitle: "设计稿实时评审工具",
-    description:
-      "基于 CRDT 的多人实时批注画布，支持像素级锚点与线程讨论，把评审往返从三天压到一次会议。",
-    tags: ["Next.js", "Yjs", "WebSocket", "Canvas"],
-    year: "2025",
-    icon: Aperture,
     accent: "hsl(189 94% 43%)",
-    metric: { value: "3×", label: "评审效率" },
-    href: "#",
-  },
-  {
-    title: "Pulse 实时监控",
-    subtitle: "前端可观测平台",
-    description:
-      "自研埋点 SDK 与错误聚合面板，准确还原用户操作路径，线上问题平均定位时间从小时级降到分钟级。",
-    tags: ["SDK", "数据可视化", "性能", "告警"],
-    year: "2024",
-    icon: Gauge,
-    accent: "hsl(160 84% 39%)",
-    metric: { value: "12min", label: "平均定位时长" },
-    href: "#",
-  },
-  {
-    title: "Mosaic 低代码搭建",
-    subtitle: "营销页面可视化编辑器",
-    description:
-      "拖拽式搭建引擎，产出静态页面首屏 0.9s，支撑市场团队月均发布 40 个活动页，无需研发介入。",
-    tags: ["低代码", "Schema", "SSR", "内容运营"],
-    year: "2024",
-    icon: Workflow,
-    accent: "hsl(31 97% 55%)",
-    metric: { value: "0.9s", label: "首屏 LCP" },
-    href: "#",
-  },
-  {
-    title: "Type Craft 字体工具",
-    subtitle: "中文字体子集化与预览",
-    description:
-      "面向中文场景的字体子集化工具，按需裁剪字形，把 8MB 中文字体压到 240KB，附带网页实时预览。",
-    tags: ["工具", "WASM", "字体", "性能"],
-    year: "2023",
-    icon: Type,
-    accent: "hsl(340 82% 52%)",
-    metric: { value: "-97%", label: "字体体积" },
+    metric: { value: "10+", label: "组件" },
     href: "#",
   },
 ];
 
 /* ------------------------------------------------------------------ */
-/* 经历                                                                */
+/* 经历 —— 大一新生的真实时间线                                         */
 /* ------------------------------------------------------------------ */
 
 export const timeline = [
   {
-    period: "2023 — 至今",
-    title: "资深前端工程师 · 某科技公司",
+    period: "2026 — 至今",
+    title: "杭州电子科技大学 · 本科在读",
     description:
-      "负责数据产品线的前端架构与设计系统。推动组件库从 0 到 1，覆盖 9 条业务线，前端需求交付周期缩短约 40%。",
+      "计算机相关专业大一。一边补数学与 C 语言这些基本功，一边把自学的 Web 开发往系统化方向推 —— 目标是不只会写页面，也懂底层怎么跑。",
+    icon: BookOpen,
+  },
+  {
+    period: "2023 — 2026",
+    title: "高中阶段 · 自学 Web 开发",
+    description:
+      "从 HTML/CSS 起步，一路学到 React 与 TypeScript。没有系统课程，靠文档、开源项目和反复重写自己的练习项目往前走。",
     icon: Rocket,
   },
   {
-    period: "2021 — 2023",
-    title: "前端工程师 · 某 SaaS 平台",
+    period: "2025",
+    title: "第一次独立把东西做上线",
     description:
-      "主导管理后台重构，抽象权限与表单引擎，把 200+ 页面收敛到 20 个可复用模板，同时把首屏从 4.1s 优化到 1.2s。",
-    icon: Cpu,
-  },
-  {
-    period: "2019 — 2021",
-    title: "前端开发 · 某互联网创业团队",
-    description:
-      "从零参与产品上线，负责 Web 端与移动 H5，建立代码规范、CI 流程与错误监控体系，团队从 2 人扩到 8 人。",
+      "为了搞清楚「一个网站到底怎么才能被别人访问」，自己走完了从本地开发到域名解析、HTTPS 证书、多平台部署的全流程，也就是现在这个站点。",
     icon: ShieldCheck,
   },
 ];
@@ -234,14 +208,14 @@ export const interests = [
   { icon: Gamepad2, label: "单机游戏", note: "偏爱叙事与沉浸感" },
   { icon: Music4, label: "电子音乐", note: "写代码时的背景音" },
   { icon: Cpu, label: "硬件折腾", note: "装机与性能调优" },
-  { icon: Music4, label: "长跑", note: "每周 3 次，配速 5'30\"" },
+  { icon: Aperture, label: "折腾新工具", note: "什么火就试什么" },
 ];
 
 export const values = [
-  "先把问题定义清楚，再动手写代码。",
-  "界面是产品的一部分，不是贴上去的皮。",
-  "能被测试覆盖的约定，才叫规范。",
-  "性能是功能，不是优化项。",
+  "先把东西做出来，再谈优化 —— 空想不如一次能跑的提交。",
+  "界面是产品的一部分，不是最后贴上去的皮。",
+  "不懂的技术先看文档和源码，不照抄结论。",
+  "做完了不算完，能讲清楚为什么这么做才算。",
 ];
 
 export const nav = [
@@ -252,4 +226,5 @@ export const nav = [
   { label: "联系", href: "#contact" },
 ];
 
-export { Compass };
+/* 保留导出，避免其他模块引用时报错 */
+export { Compass, Database, Type, Workflow };
