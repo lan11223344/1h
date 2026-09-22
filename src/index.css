@@ -115,6 +115,28 @@
   }
 }
 
+@layer components {
+  /*
+    卡片堆的展开系数。
+    为什么不用 Tailwind 的 hover:[--spread:...] 任意值：
+    那些类会和基础值产生同特异性冲突，胜负取决于生成顺序，不可控；
+    而且 --spread 若写成元素 inline style，会以最高特异性压掉一切规则。
+
+    这里用 :where() 把"收起态"的特异性降到 0，
+    展开态（:hover / :focus-within / [data-expanded]）用正常特异性，
+    于是展开规则一定赢，且三条通路互不干扰。
+  */
+  :where(.card-stack) {
+    --spread: var(--spread-closed, 1);
+  }
+
+  .card-stack:hover,
+  .card-stack:focus-within,
+  .card-stack[data-expanded] {
+    --spread: var(--spread-open, 2.1);
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -17,8 +17,9 @@ import { cn } from "@/lib/utils";
  * - 容器为响应式 Grid，所有卡片共用同一 grid-area，因此天然重叠。
  * - 偏移量全部走 CSS 变量（--stack-x / --stack-y / --lift），
  *   断点差异在类名里声明，组件本身不写死任何尺寸。
- * - 触屏设备没有 hover：用 active（按住即抬起）+ group-focus-within 兜底，
- *   保证点击 / Tab 也能展开卡片，不会出现"内容只存在于 hover 里"。
+ * - 展开系数走 CSS 变量 --spread，而不是 JS 常量：
+ *   这样 hover / focus-visible（纯 CSS）与点击（JS 状态）能共用同一条通路，
+ *   三种输入方式都能真正拉开卡片间距——只改灰度不改变位移是不成立的。
  */
 
 export type DisplayCardItem = {
@@ -66,22 +67,22 @@ const DEFAULT_ACCENTS = [
  * 层叠偏移量：完全由 CSS 变量承载，随视口宽度自适应。
  * 移动端卡片本就接近满宽，若沿用桌面端的 3rem 偏移，后排卡片会被推出屏幕外，
  * 所以小屏用更小的单位（1rem / 0.8rem），断点切换写在容器的类名上。
+ *
+ * 展开系数同样用变量 --spread 承载（默认 1），
+ * 由容器的 hover / focus-visible / data-expanded 三条规则统一覆写，
+ * 因此鼠标悬停、Tab 聚焦、点击展开都会得到相同的扇形位移。
  */
 const STACK_UNIT_X = "var(--stack-x)";
 const STACK_UNIT_Y = "var(--stack-y)";
 
 /** 为每张卡片生成基于索引的层叠偏移样式 */
-function cardStackStyle(
-  index: number,
-  spread: number,
-  offsetY: number
-): React.CSSProperties {
+function cardStackStyle(index: number, offsetY: number): React.CSSProperties {
   // 索引从 0 开始，0 为最底层（视觉上被后续卡片盖住）
   const depth = index;
   return {
     gridArea: "stack",
-    // 用 CSS 变量承载偏移，展开时覆写 --lift 实现"抬起"
-    transform: `translate3d(calc(${depth} * ${STACK_UNIT_X} * ${spread}), calc(${depth} * ${STACK_UNIT_Y} * ${spread} + ${offsetY}px + var(--lift, 0px)), 0)`,
+    // 用 CSS 变量承载偏移；--spread 决定展开程度，--lift 实现"抬起"
+    transform: `translate3d(calc(${depth} * ${STACK_UNIT_X} * var(--spread, 1)), calc(${depth} * ${STACK_UNIT_Y} * var(--spread, 1) + ${offsetY}px + var(--lift, 0px)), 0)`,
     zIndex: depth + 1,
     transitionProperty: "transform, opacity, filter",
     transitionDuration: "500ms",
@@ -103,40 +104,77 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
     ref
   ) => {
     /*
-      触屏交互用 JS 状态驱动，而不是 :active / :focus-visible 伪类——
-      国产安卓浏览器上快速点按的 active 一闪而过、focus-visible 不触发，
-      只有显式的点击状态在所有手机上行为一致。
-      点按卡片堆 → 扇形展开（灰度恢复、间距拉大）；再点一次收起。
+      交互三条通路，最终都作用于同一个 --spread 变量：
+      1) 鼠标：容器 :hover → --spread 放大
+      2) 键盘：容器 :focus-within（Tab 进入）→ --spread 放大
+      3) 触屏：点击切换 expanded 状态 → data-expanded 属性驱动 --spread 放大
+      只改灰度、不改变位移的话，后排卡片仍然被前排完全盖住，
+      所以"展开"必须是真实的几何位移，而不是只去掉滤镜。
     */
     const [expanded, setExpanded] = React.useState(false);
+    const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+    // 合并外部 ref 与内部 ref：容器既可能要转发给父级，也要能自己读焦点
+    const setRefs = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        containerRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      },
+      [ref]
+    );
+
     const toggleExpanded = () => setExpanded((v) => !v);
+
+    /*
+      点击 / 触屏收起后必须主动失焦：
+      容器带 tabIndex=0，浏览器点击时会把焦点给它，
+      于是 :focus-within 继续命中，--spread 一直被撑开，看起来就是"收不回去"。
+      键盘操作不走这里——焦点要保留，用户才能继续按 Enter/Space。
+    */
+    const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+      const next = !expanded;
+      setExpanded(next);
+      if (!next && event.detail > 0) {
+        // detail > 0 表示真实指针点击（键盘触发的 click 其 detail 为 0）
+        containerRef.current?.blur();
+      }
+    };
+
+    // 展开系数：展开后比收起时明显拉开，形成扇形
+    const expandedSpread = spread * 2.1;
 
     if (cards.length === 0) return null;
 
     const total = cards.length;
 
-    // 展开时的层叠系数：给触屏一个明显大于 hover 的扇形
-    const effectiveSpread = expanded ? spread * 2.1 : spread;
-
     return (
       <div
-        ref={ref}
+        ref={setRefs}
         data-slot="display-cards"
         data-expanded={expanded || undefined}
         role="button"
         tabIndex={0}
         aria-pressed={expanded}
         aria-label={expanded ? "收起卡片堆" : "展开卡片堆"}
-        onClick={toggleExpanded}
+        onClick={handleClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             toggleExpanded();
           }
         }}
+        style={
+          {
+            // 这两个是"配置值"，只声明一次，永远不被状态覆盖；
+            // 真正参与展开/收起切换的是 --spread，规则写在 index.css 的 .card-stack 段。
+            "--spread-closed": spread,
+            "--spread-open": expandedSpread,
+          } as React.CSSProperties
+        }
         className={cn(
           // 响应式容器：移动端收紧内边距，避免卡片贴边；宽屏给出呼吸感
-          "group/stack grid w-full max-w-3xl cursor-pointer px-1 py-4 sm:px-4 sm:py-8",
+          "card-stack group/stack grid w-full max-w-3xl cursor-pointer px-1 py-4 sm:px-4 sm:py-8",
           "grid-cols-1 [grid-template-areas:'stack']",
           // 层叠偏移单位：移动端更紧凑，避免后排卡片被推出视口
           "[--stack-x:1rem] [--stack-y:0.8rem] sm:[--stack-x:2.2rem] sm:[--stack-y:1.8rem] lg:[--stack-x:3rem] lg:[--stack-y:2.5rem]",
@@ -158,7 +196,7 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
               key={`${card.title ?? "card"}-${index}`}
               aria-label={card.title}
               style={{
-                ...cardStackStyle(index, effectiveSpread, offsetY),
+                ...cardStackStyle(index, offsetY),
                 ...(accent ? ({ "--accent-color": accent } as React.CSSProperties) : {}),
               }}
               className={cn(
@@ -169,12 +207,13 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
                 "shadow-[0_-1px_0_0_hsl(var(--border))_inset,0_0_0_1px_hsl(var(--border)),0_8px_30px_-12px_rgb(0_0_0_/_0.35)]",
                 "outline-none ring-offset-background sm:h-[13.5rem] sm:w-[min(100%,22rem)]",
                 // 抬起：改 --lift 而不是 translate 工具类，避免覆盖 inline transform
-                // hover 覆盖鼠标（桌面），展开状态下由 JS 状态接管视觉
-                "transition-[filter,box-shadow] hover:[--lift:-0.75rem]",
-                // 灰度层叠效果：收起时灰度，展开后恢复彩色
+                "transition-[filter,box-shadow]",
+                // 灰度：收起时靠后的卡片去色；容器 hover / 聚焦 / 展开时统一恢复彩色。
+                // 这里用容器级状态（而非卡片自身 hover），才能一次点亮整摞卡片。
+                isBack && "grayscale",
                 isBack &&
-                  !expanded &&
-                  "grayscale group-hover/stack:grayscale-0",
+                  "group-hover/stack:grayscale-0 group-focus-within/stack:grayscale-0",
+                isBack && "group-data-[expanded]/stack:grayscale-0",
                 card.className
               )}
             >
