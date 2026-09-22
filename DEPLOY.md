@@ -199,21 +199,38 @@ npm run preview    # 本地预览构建产物，验证和线上一致
 ### 推送命令（本机 git 不在系统 PATH）
 
 这台电脑的 git 装在 WorkBuddy 自带的 PortableGit 里，直接用 `git` 会报「不是内部或外部命令」。
-两种解法：
 
-**解法一：用完整路径（临时可用）**
+**已修复：** git 的安装目录和 `GIT_EXEC_PATH` 都已写入用户环境变量，**新开一个终端**就能直接敲 `git push`。
 
-```powershell
-cd "C:\Users\兰浩\WorkBuddy\2026-09-21-20-45-14"
-& "C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd\git.exe" add .
-& "C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd\git.exe" commit -m "update content"
-& "C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd\git.exe" push
+⚠️ **关键坑：为什么之前 push 会失败**
+
+报错长这样：
+
+```
+fatal: remote helper 'https' aborted session
 ```
 
-**解法二：加进系统 PATH（一劳永逸，推荐）**
+原因是 git 走 HTTPS 时依赖一个外部程序 `git-remote-https.exe`，而 git **只在 `GIT_EXEC_PATH` 指向的目录里找它，不搜 PATH**。
+本机 PortableGit 的 helper 位于 `mingw64\bin`，但 `git.exe` 默认推导出的 `GIT_EXEC_PATH` 不包含该目录，于是认为没有 https 能力，直接失败。
 
-把 `C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd` 加入用户环境变量 Path，
-重开终端后就能直接敲 `git` 了。
+所以只把 git 加进 PATH 是不够的，**必须同时设置 `GIT_EXEC_PATH`**（已设为 `...\PortableGit\versions\1.2.0\mingw64\bin`）。
+
+验证是否正常 —— 能打印出远程 commit 就说明修好了：
+
+```powershell
+git ls-remote origin main
+```
+
+**手动设置（若换电脑或环境重置）**
+
+```powershell
+$env:PATH = "C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\mingw64\bin;" + $env:PATH
+$env:GIT_EXEC_PATH = "C:\Users\兰浩\.workbuddy\binaries\PortableGit\versions\1.2.0\mingw64\bin"
+```
+
+> 注意用 `mingw64\bin` 下的 git，而**不是** `cmd` 下的 —— 后者同样受 `GIT_EXEC_PATH` 影响，但配合上面的设置两者都可正常工作。
+> 仓库根目录的 `推送.bat` 双击即可推送（内部就是 `git push origin main`）。
+
 
 ### 更新依赖
 

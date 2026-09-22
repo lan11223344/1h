@@ -53,3 +53,11 @@ ffmpeg.zip
 .tap-*
 .frame-*
 .probe.mp4
+.*.ps1
+.*.txt
+push-log.txt
+
+# 本地推送脚本（工具类，不入库）
+推送.bat
+push.bat
+
