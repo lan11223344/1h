@@ -33,7 +33,7 @@ export const profile = {
   /** 一句话说清现在在哪、在做什么 */
   headline: "杭州电子科技大学 · 大一在读",
   location: "中国 · 杭州",
-  email: "hello@example.com",
+  email: "2467505172@qq.com",
   tagline: "先把东西做出来，再谈做得好不好。",
   summary:
     "杭电大一新生，从高一开始自学 Web 开发。喜欢把想法真的跑起来 —— 这个网站就是我独立完成的第一个公开项目：从设计、写代码，到买域名、配 HTTPS、部署上线，整条链路自己走了一遍。",
@@ -48,7 +48,7 @@ export const profile = {
 
 export const socials = [
   { label: "GitHub", href: "https://github.com/lan11223344" },
-  { label: "邮箱", href: "mailto:hello@example.com" },
+  { label: "邮箱", href: "mailto:2467505172@qq.com" },
 ];
 
 /* ------------------------------------------------------------------ */
