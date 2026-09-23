@@ -111,13 +111,15 @@ export function Hero() {
                 className="mx-auto lg:mx-0"
               />
               {/*
-                交互提示按设备区分：桌面悬停展开，触屏点按展开/收起
+                交互提示：点按（或键盘聚焦）换位，设备之间行为一致
               */}
               <p className="mt-2 pl-1 text-xs leading-relaxed text-muted-foreground">
                 <span className="hidden sm:inline">
-                  悬停或用 Tab 聚焦，卡片会依次展开
+                  点击卡片，或用 Tab 聚焦后按回车 —— 最前的一张沉到底，下一张浮上来
                 </span>
-                <span className="sm:hidden">点按卡片展开，再点一次收起</span>
+                <span className="sm:hidden">
+                  点按卡片切换顺序，最前的一张沉到底
+                </span>
               </p>
             </div>
           </div>

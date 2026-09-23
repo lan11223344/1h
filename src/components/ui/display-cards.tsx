@@ -6,20 +6,19 @@ import { cn } from "@/lib/utils";
 /**
  * DisplayCards
  * ------------------------------------------------------------------
- * 堆叠式卡片组：三张卡片通过 CSS Grid 叠放在同一格（grid-area: stack），
- * 默认逐层向右下偏移形成"牌堆"层叠感；展开时当前卡片抬起、后层卡片
- * 由灰度恢复彩色，形成"扇形展开 + 点亮"的效果。
+ * 堆叠式卡片组：卡片通过 CSS Grid 叠放在同一格（grid-area: stack），
+ * 沿右下方向逐层偏移形成"牌堆"层叠感。
  *
- * 作者风格参考：user_Codehagen / Prism UI
- * 安装锚点：npx shadcn@latest add https://21st.dev/r/user_Codehagen/display-cards
+ * 交互（点击换位）：
+ * - 点击最前面的卡片 → 它沉到牌堆最底，下一张浮到最前（整摞循环轮换）
+ * - 点击后排露出的卡片 → 直接把它抽到最前
+ * - 键盘：卡片可 Tab 聚焦，Enter / Space 执行同样的动作
  *
- * 设计要点：
- * - 容器为响应式 Grid，所有卡片共用同一 grid-area，因此天然重叠。
- * - 偏移量全部走 CSS 变量（--stack-x / --stack-y / --lift），
- *   断点差异在类名里声明，组件本身不写死任何尺寸。
- * - 展开系数走 CSS 变量 --spread，而不是 JS 常量：
- *   这样 hover / focus-visible（纯 CSS）与点击（JS 状态）能共用同一条通路，
- *   三种输入方式都能真正拉开卡片间距——只改灰度不改变位移是不成立的。
+ * 为什么不做 hover 展开：
+ * :hover / :focus-visible 在触屏与国产浏览器内核上的行为并不一致
+ * （点按后 hover 残留、focus-visible 不触发等），而"点一下换一张"
+ * 是完全由 JS 状态驱动的显式动作，在任何设备上表现都相同。
+ * 偏移量一律用 JS 算好后写进 inline transform，不依赖任何 CSS 计算技巧。
  */
 
 export type DisplayCardItem = {
@@ -45,13 +44,13 @@ export type DisplayCardItem = {
 
 export interface DisplayCardsProps
   extends React.HTMLAttributes<HTMLDivElement> {
-  /** 卡片数据数组，按顺序渲染（后者覆盖在前者之上） */
+  /** 卡片数据数组，按顺序渲染（默认最后一张在最前面） */
   cards?: DisplayCardItem[];
-  /** 整个卡片组在展开时的层叠偏移缩放系数 */
+  /** 层叠偏移的整体缩放系数 */
   spread?: number;
   /** 卡片堆整体在 Y 轴的额外偏移（px），用于不同版心对齐 */
   offsetY?: number;
-  /** 是否启用灰度 → 彩色的点亮效果 */
+  /** 是否启用「后排灰度 → 前排彩色」的点亮效果 */
   grayscaleEffect?: boolean;
   /** 卡片之间的视觉层级循环使用的强调色（HSL 字符串） */
   accentColors?: string[];
@@ -63,29 +62,41 @@ const DEFAULT_ACCENTS = [
   "hsl(189 94% 43%)", // cyan-600
 ];
 
-/**
- * 层叠偏移量：完全由 CSS 变量承载，随视口宽度自适应。
- * 移动端卡片本就接近满宽，若沿用桌面端的 3rem 偏移，后排卡片会被推出屏幕外，
- * 所以小屏用更小的单位（1rem / 0.8rem），断点切换写在容器的类名上。
- *
- * 展开系数同样用变量 --spread 承载（默认 1），
- * 由容器的 hover / focus-visible / data-expanded 三条规则统一覆写，
- * 因此鼠标悬停、Tab 聚焦、点击展开都会得到相同的扇形位移。
- */
-const STACK_UNIT_X = "var(--stack-x)";
-const STACK_UNIT_Y = "var(--stack-y)";
+/** 换位动画的节奏：先"抽出"，再"落位" */
+const LIFT_MS = 220;
+const SETTLE_MS = 520;
 
-/** 为每张卡片生成基于索引的层叠偏移样式 */
-function cardStackStyle(index: number, offsetY: number): React.CSSProperties {
-  // 索引从 0 开始，0 为最底层（视觉上被后续卡片盖住）
-  const depth = index;
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+function sameOrder(a: number[], b: number[]) {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+/**
+ * 单张卡片的位移样式。
+ * depth 决定它在牌堆里的层数（0 = 最底层），全部由 JS 算好，
+ * 偏移单位用 CSS 变量 --stack-x / --stack-y 承载，
+ * 这样断点差异只写在容器的类名上，组件本身不写死任何尺寸。
+ */
+function cardStackStyle(
+  depth: number,
+  { offsetY, spread, lifted }: { offsetY: number; spread: number; lifted: boolean }
+): React.CSSProperties {
+  // 抽出中的卡片多探出一层，视觉上像被"捏"起来
+  const d = depth + (lifted ? 1 : 0);
   return {
     gridArea: "stack",
-    // 用 CSS 变量承载偏移；--spread 决定展开程度，--lift 实现"抬起"
-    transform: `translate3d(calc(${depth} * ${STACK_UNIT_X} * var(--spread, 1)), calc(${depth} * ${STACK_UNIT_Y} * var(--spread, 1) + ${offsetY}px + var(--lift, 0px)), 0)`,
-    zIndex: depth + 1,
-    transitionProperty: "transform, opacity, filter",
-    transitionDuration: "500ms",
+    transform: `translate3d(calc(${d} * var(--stack-x) * ${spread}), calc(${d} * var(--stack-y) * ${spread} + ${offsetY}px + var(--lift, 0px)), 0)`,
+    // 抽出中的卡片临时提到最上层，落位后交还给 depth 决定的层级
+    zIndex: lifted ? 100 : depth + 1,
+    transitionProperty: "transform, filter, opacity",
+    transitionDuration: `${SETTLE_MS}ms`,
     transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
   };
 }
@@ -103,117 +114,170 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
     },
     ref
   ) => {
-    /*
-      交互三条通路，最终都作用于同一个 --spread 变量：
-      1) 鼠标：容器 :hover → --spread 放大
-      2) 键盘：容器 :focus-within（Tab 进入）→ --spread 放大
-      3) 触屏：点击切换 expanded 状态 → data-expanded 属性驱动 --spread 放大
-      只改灰度、不改变位移的话，后排卡片仍然被前排完全盖住，
-      所以"展开"必须是真实的几何位移，而不是只去掉滤镜。
-    */
-    const [expanded, setExpanded] = React.useState(false);
-    const containerRef = React.useRef<HTMLDivElement | null>(null);
+    const total = cards.length;
 
-    // 合并外部 ref 与内部 ref：容器既可能要转发给父级，也要能自己读焦点
-    const setRefs = React.useCallback(
-      (node: HTMLDivElement | null) => {
-        containerRef.current = node;
-        if (typeof ref === "function") ref(node);
-        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    /** 牌堆顺序，数组本身是「从最底层到最前面」，元素值是 cards 的原始索引 */
+    const [order, setOrder] = React.useState<number[]>(() =>
+      cards.map((_, i) => i)
+    );
+    /** 正在被"抽出"的那张卡片（原始索引），它的位移与层级会临时抬高 */
+    const [lifted, setLifted] = React.useState<number | null>(null);
+    const timerRef = React.useRef<number | null>(null);
+
+    // 卡片数量变化时重建顺序（防御性处理，正常渲染不会发生）
+    React.useEffect(() => {
+      setOrder((prev) =>
+        prev.length === total && prev.every((v) => v >= 0 && v < total)
+          ? prev
+          : Array.from({ length: total }, (_, i) => i)
+      );
+    }, [total]);
+
+    React.useEffect(
+      () => () => {
+        if (timerRef.current) window.clearTimeout(timerRef.current);
       },
-      [ref]
+      []
     );
 
-    const toggleExpanded = () => setExpanded((v) => !v);
+    const depthOf = React.useCallback(
+      (index: number) => {
+        const pos = order.indexOf(index);
+        return pos === -1 ? index : pos;
+      },
+      [order]
+    );
 
-    /*
-      点击 / 触屏收起后必须主动失焦：
-      容器带 tabIndex=0，浏览器点击时会把焦点给它，
-      于是 :focus-within 继续命中，--spread 一直被撑开，看起来就是"收不回去"。
-      键盘操作不走这里——焦点要保留，用户才能继续按 Enter/Space。
-    */
-    const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-      const next = !expanded;
-      setExpanded(next);
-      if (!next && event.detail > 0) {
-        // detail > 0 表示真实指针点击（键盘触发的 click 其 detail 为 0）
-        containerRef.current?.blur();
-      }
-    };
+    /**
+     * 执行一次换位：先让 liftIndex 这张"抽出"，动画过半后再真正重排。
+     * 两段式是为了让观者看清是哪一张在动——直接瞬移会让轮换显得莫名其妙。
+     */
+    const reorder = React.useCallback(
+      (target: number[], liftIndex: number) => {
+        if (total < 2) return;
+        if (timerRef.current) return; // 动画进行中，忽略连点，避免序列错乱
+        if (sameOrder(target, order)) return;
 
-    // 展开系数：展开后比收起时明显拉开，形成扇形
-    const expandedSpread = spread * 2.1;
+        if (prefersReducedMotion()) {
+          setOrder(target);
+          return;
+        }
 
-    if (cards.length === 0) return null;
+        setLifted(liftIndex);
+        timerRef.current = window.setTimeout(() => {
+          timerRef.current = null;
+          setOrder(target);
+          setLifted(null);
+        }, LIFT_MS);
+      },
+      [order, total]
+    );
 
-    const total = cards.length;
+    /** 下一张：最前的一张沉到底，后面一张浮上来 */
+    const advance = React.useCallback(() => {
+      if (total < 2) return;
+      const front = order[order.length - 1];
+      reorder([front, ...order.slice(0, -1)], front);
+    }, [order, reorder, total]);
+
+    /** 上一张：最底的一张翻到最前 */
+    const retreat = React.useCallback(() => {
+      if (total < 2) return;
+      const back = order[0];
+      reorder([...order.slice(1), back], back);
+    }, [order, reorder, total]);
+
+    /** 把指定位置（按当前堆叠顺序）的卡片抽到最前，其余保持循环顺序 */
+    const promote = React.useCallback(
+      (pos: number) => {
+        if (total < 2) return;
+        const picked = order[pos];
+        reorder(
+          [...order.slice(pos + 1), ...order.slice(0, pos + 1)],
+          picked
+        );
+      },
+      [order, reorder, total]
+    );
+
+    if (total === 0) return null;
 
     return (
       <div
-        ref={setRefs}
+        ref={ref}
         data-slot="display-cards"
-        data-expanded={expanded || undefined}
-        role="button"
-        tabIndex={0}
-        aria-pressed={expanded}
-        aria-label={expanded ? "收起卡片堆" : "展开卡片堆"}
-        onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggleExpanded();
-          }
-        }}
-        style={
-          {
-            // 这两个是"配置值"，只声明一次，永远不被状态覆盖；
-            // 真正参与展开/收起切换的是 --spread，规则写在 index.css 的 .card-stack 段。
-            "--spread-closed": spread,
-            "--spread-open": expandedSpread,
-          } as React.CSSProperties
-        }
         className={cn(
-          // 响应式容器：移动端收紧内边距，避免卡片贴边；宽屏给出呼吸感
-          "card-stack group/stack grid w-full max-w-3xl cursor-pointer px-1 py-4 sm:px-4 sm:py-8",
+          "card-stack grid w-full max-w-3xl px-1 py-4 sm:px-4 sm:py-8",
           "grid-cols-1 [grid-template-areas:'stack']",
           // 层叠偏移单位：移动端更紧凑，避免后排卡片被推出视口
           "[--stack-x:1rem] [--stack-y:0.8rem] sm:[--stack-x:2.2rem] sm:[--stack-y:1.8rem] lg:[--stack-x:3rem] lg:[--stack-y:2.5rem]",
-          // 预留展开所需的垂直空间：卡片高度 + 最大 Y 向偏移
+          // 预留位移所需的空间：卡片高度 + 最大偏移，避免溢出到下一段内容
           "min-h-[15.5rem] items-start justify-items-start sm:min-h-[19rem] lg:min-h-[22rem]",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl",
           className
         )}
         {...props}
       >
         {cards.map((card, index) => {
-          const isFront = index === total - 1;
+          const depth = depthOf(index);
+          const isFront = depth === total - 1;
           const accent = accentColors[index % accentColors.length];
-          const isBack =
-            grayscaleEffect && index < total - 1; /* 非最前层默认灰度 */
+          const isBack = grayscaleEffect && !isFront;
 
           return (
             <article
               key={`${card.title ?? "card"}-${index}`}
-              aria-label={card.title}
+              role="button"
+              tabIndex={0}
+              data-depth={depth}
+              aria-label={
+                isFront
+                  ? `${card.title ?? "卡片"}，点击切换到下一张`
+                  : `${card.title ?? "卡片"}，点击提到最前`
+              }
+              onClick={(event) => {
+                event.stopPropagation();
+                if (isFront) advance();
+                else promote(depth);
+              }}
+              onKeyDown={(event) => {
+                const { key } = event;
+                if (key === "Enter" || key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (isFront) advance();
+                  else promote(depth);
+                  return;
+                }
+                // 方向键直接翻牌堆，不必先聚焦到某一张
+                if (key === "ArrowRight" || key === "ArrowDown") {
+                  event.preventDefault();
+                  advance();
+                } else if (key === "ArrowLeft" || key === "ArrowUp") {
+                  event.preventDefault();
+                  retreat();
+                }
+              }}
               style={{
-                ...cardStackStyle(index, offsetY),
-                ...(accent ? ({ "--accent-color": accent } as React.CSSProperties) : {}),
+                ...cardStackStyle(depth, {
+                  offsetY,
+                  spread,
+                  lifted: lifted === index,
+                }),
+                ...(accent
+                  ? ({ "--accent-color": accent } as React.CSSProperties)
+                  : {}),
               }}
               className={cn(
                 // 基础卡片外观（shadcn/ui tokens）
                 // 宽度用 min() 而非固定值：窄屏时自动收缩，永不超过容器
-                "relative flex h-[11.5rem] w-[min(100%,18rem)] flex-col justify-between",
+                "relative flex h-[11.5rem] w-[min(100%,18rem)] cursor-pointer flex-col justify-between",
                 "overflow-hidden rounded-xl border bg-card p-5 text-card-foreground",
                 "shadow-[0_-1px_0_0_hsl(var(--border))_inset,0_0_0_1px_hsl(var(--border)),0_8px_30px_-12px_rgb(0_0_0_/_0.35)]",
                 "outline-none ring-offset-background sm:h-[13.5rem] sm:w-[min(100%,22rem)]",
-                // 抬起：改 --lift 而不是 translate 工具类，避免覆盖 inline transform
-                "transition-[filter,box-shadow]",
-                // 灰度：收起时靠后的卡片去色；容器 hover / 聚焦 / 展开时统一恢复彩色。
-                // 这里用容器级状态（而非卡片自身 hover），才能一次点亮整摞卡片。
-                isBack && "grayscale",
-                isBack &&
-                  "group-hover/stack:grayscale-0 group-focus-within/stack:grayscale-0",
-                isBack && "group-data-[expanded]/stack:grayscale-0",
+                "card-stack-card",
+                isBack && "grayscale hover:grayscale-0",
+                // 键盘聚焦时给一圈焦点环：卡片是真正的操作对象
+                "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 card.className
               )}
             >
@@ -266,7 +330,7 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
                 ) : null}
               </div>
 
-              {/* 强调色装饰条：跟随层级颜色循环 */}
+              {/* 强调色装饰条：跟随卡片自身颜色 */}
               <span
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] opacity-70"
@@ -276,15 +340,12 @@ const DisplayCards = React.forwardRef<HTMLDivElement, DisplayCardsProps>(
                 }}
               />
 
-              {/* 装饰层：统一收进裁切容器。
-                  光晕原本用负偏移顶出卡片外，虽然 overflow-hidden 能把它裁掉、
-                  不产生滚动条，但会让卡片 scrollWidth 大于 clientWidth，
-                  在移动端容易触发误判的横向滚动。改为由父级精确裁切。 */}
+              {/* 装饰层：光晕统一收进裁切容器，
+                  避免负偏移把卡片撑出 scrollWidth，触发移动端横向滚动 */}
               <span
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
               >
-                {/* 前层卡片的柔光，增强堆叠层次 */}
                 {isFront ? (
                   <span
                     className="absolute -right-16 -top-16 size-40 rounded-full opacity-[0.12] blur-2xl"
