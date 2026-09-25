@@ -41,7 +41,7 @@ export const profile = {
   stats: [
     { label: "在校年级", value: "大一" },
     { label: "自学时长", value: "3 年" },
-    { label: "公开上线项目", value: "1" },
+    { label: "公开上线项目", value: "2" },
     { label: "技术栈", value: "TS" },
   ],
 };
@@ -65,6 +65,15 @@ export const heroCards: DisplayCardItem[] = [
     iconClassName:
       "border-blue-500/25 bg-blue-500/10 text-blue-600 dark:text-blue-400",
     titleClassName: "text-foreground",
+  },
+  {
+    icon: <Gamepad2 className="size-4" />,
+    title: "刚做出来的",
+    description:
+      "《看见雾》—— 情绪主题互动叙事网页游戏。6 种结局、雾与视野随选择实时变化，手绘 SVG 剪影立绘。在下方「作品」里可以直接开玩。",
+    date: "新作",
+    iconClassName:
+      "border-cyan-500/25 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
   },
   {
     icon: <Boxes className="size-4" />,
@@ -134,6 +143,18 @@ export type Project = {
 };
 
 export const projects: Project[] = [
+  {
+    title: "《看见雾》互动叙事游戏",
+    subtitle: "情绪主题 · 2D 叙事网页游戏",
+    description:
+      "一款关于情绪、视野与选择的互动叙事游戏：玩家在雾中做出选择，希望、信任等状态实时驱动视野收窄与雾的浓淡，共 6 种结局，含跨局结局收集系统。纯 Vanilla JS 状态机 + 手绘 SVG 剪影立绘，标题页与结局页与这个站点互相关联。",
+    tags: ["Vanilla JS", "SVG", "叙事设计", "状态机"],
+    year: "2026",
+    icon: Gamepad2,
+    accent: "hsl(200 74% 52%)",
+    metric: { value: "6", label: "种结局" },
+    href: "https://kanjianwu-d8gpq1gna68cd9ed7-1493314182.tcloudbaseapp.com/kanjianwu/",
+  },
   {
     title: "lanhao.site 个人站点",
     subtitle: "你正在浏览的这个网站",
